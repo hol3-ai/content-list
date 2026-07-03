@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claudeコンテンツリスト</title>
+<style>
+:root {
+  --bg:#0d1117;--surface:#161b27;--surface2:#1e2436;--border:#2a3050;--border2:#4a5280;
+  --gold:#c9a84c;--gold2:#e8c97a;
+  --text:#f0f2fa;--muted:#c0c8e0;--dim:#8890b0;
+  --green:#4dc98a;--blue:#6b9df5;--purple:#a07ae0;--red:#e06868;
+  --font:'Segoe UI','Hiragino Sans','Yu Gothic UI',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh;display:flex;flex-direction:column;overflow:hidden;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;}
+
+/* HEADER */
+.hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:13px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.hdr-left{display:flex;align-items:center;gap:13px;}
+.logo{width:34px;height:34px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:#0d1117;}
+.hdr-title{font-size:15px;font-weight:700;color:var(--text);}
+.hdr-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.hdr-right{display:flex;gap:8px;align-items:center;}
+.sync-status{font-size:11px;color:var(--muted);}
+.sync-status.ok{color:var(--green);}
+.sync-status.err{color:var(--red);}
+.btn{padding:8px 15px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;transition:opacity .15s,transform .1s;font-family:var(--font);}
+.btn:active{transform:scale(.97);}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0d1117;}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--muted);}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold);}
+.btn-green{background:rgba(77,201,138,.15);border:1px solid rgba(77,201,138,.4);color:var(--green);}
+.btn-green:hover{background:rgba(77,201,138,.25);}
+
+/* LAYOUT */
+.layout{display:flex;flex:1;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:200px;min-width:200px;background:var(--surface);border-right:1px solid var(--border);padding:13px 0;overflow-y:auto;flex-shrink:0;}
+.sb-label{font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--dim);text-transform:uppercase;padding:0 14px 7px;}
+.sb-item{display:flex;align-items:center;gap:9px;padding:8px 14px;cursor:pointer;border-left:3px solid transparent;transition:background .12s,border-color .12s;}
+.sb-item:hover{background:var(--surface2);}
+.sb-item.active{background:var(--surface2);border-left-color:var(--gold);}
+.sb-icon{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+.sb-name{font-size:12px;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sb-item.active .sb-name{font-weight:600;}
+.sb-cnt{font-size:10px;padding:1px 6px;border-radius:9px;background:var(--surface2);color:var(--muted);min-width:20px;text-align:center;}
+.sb-item.active .sb-cnt{background:var(--gold);color:#0d1117;font-weight:700;}
+.sb-div{margin:8px 14px;border:none;border-top:1px solid var(--border);}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{padding:13px 20px 8px;display:flex;gap:8px;align-items:center;flex-shrink:0;}
+.search{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:8px 12px 8px 34px;color:var(--text);font-size:13px;font-family:var(--font);outline:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23c0c8e0' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:10px center;transition:border-color .2s;}
+.search:focus{border-color:var(--gold);}
+.search::placeholder{color:var(--dim);}
+
+/* STATS */
+.stats{display:flex;gap:8px;padding:0 20px 10px;flex-shrink:0;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;flex:1;}
+.stat-v{font-size:20px;font-weight:800;color:var(--gold);}
+.stat-l{font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.05em;}
+
+/* LIST */
+.list-wrap{flex:1;overflow-y:auto;padding:0 20px 16px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:9px;overflow:hidden;transition:border-color .15s;}
+.card:hover{border-color:var(--border2);}
+.card-head{display:flex;align-items:flex-start;gap:12px;padding:14px 16px 10px;}
+.card-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;margin-top:1px;}
+.card-body{flex:1;min-width:0;}
+.card-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.card-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px;}
+.tag{font-size:10px;padding:2px 8px;border-radius:4px;font-weight:600;}
+.tag-cat{background:var(--surface2);color:var(--muted);border:1px solid var(--border);}
+.card-note{font-size:12px;color:var(--muted);line-height:1.65;margin-bottom:7px;}
+.card-links{display:flex;gap:6px;flex-wrap:wrap;}
+.lbtn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;text-decoration:none;border:1px solid;transition:opacity .15s;}
+.lbtn:hover{opacity:.72;}
+.lbtn-chat{color:var(--blue);border-color:rgba(107,157,245,.35);background:rgba(107,157,245,.1);}
+.lbtn-cowork{color:var(--purple);border-color:rgba(160,122,224,.35);background:rgba(160,122,224,.1);}
+.lbtn-drive{color:var(--green);border-color:rgba(77,201,138,.35);background:rgba(77,201,138,.1);}
+.card-foot{border-top:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;}
+.card-date{font-size:11px;color:var(--dim);}
+.card-actions{display:flex;gap:5px;}
+.act-btn{background:transparent;border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:11px;color:var(--muted);cursor:pointer;font-family:var(--font);transition:border-color .15s,color .15s;}
+.act-btn:hover{border-color:var(--gold);color:var(--gold);}
+.act-btn.del:hover{border-color:var(--red);color:var(--red);}
+
+/* EMPTY / LOADING */
+.empty{text-align:center;padding:55px 20px;}
+.empty-ico{font-size:36px;margin-bottom:12px;}
+.empty-t{font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.empty-s{font-size:12px;color:var(--muted);}
+.loading{text-align:center;padding:55px 20px;color:var(--muted);}
+.spinner{width:28px;height:28px;border:2px solid var(--border2);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:13px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;}
+.modal-hdr{padding:17px 20px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-size:15px;font-weight:700;color:var(--text);}
+.modal-close{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:2px 7px;line-height:1;}
+.modal-body{padding:20px;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;letter-spacing:.03em;}
+.field input,.field textarea,.field select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font);outline:none;transition:border-color .2s;line-height:1.5;}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--gold);}
+.field input::placeholder,.field textarea::placeholder{color:var(--dim);}
+.field textarea{resize:vertical;min-height:62px;}
+.field select option{background:var(--surface2);color:var(--text);}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.link-hint{font-size:11px;color:var(--muted);margin-top:5px;}
+.modal-foot{padding:0 20px 20px;display:flex;gap:8px;justify-content:flex-end;}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;right:20px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:11px 17px;font-size:13px;color:var(--text);opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s;pointer-events:none;z-index:999;max-width:300px;}
+#toast.show{opacity:1;transform:translateY(0);}
+#toast.ok{border-left:3px solid var(--green);}
+#toast.ng{border-left:3px solid var(--red);}
+.hidden{display:none!important;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="logo">AC</div>
+    <div>
+      <div class="hdr-title">Claudeコンテンツリスト</div>
+      <div class="hdr-sub">Chat · Cowork · Drive の成果物を一元管理</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <span class="sync-status" id="sync-status">---</span>
+    <button class="btn btn-green" id="btn-sync" onclick="syncDrive()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+      同期
+    </button>
+    <button class="btn btn-gold" onclick="openModal()">＋ 手動登録</button>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sb-label">カテゴリ</div>
+    <div id="sb-cat"></div>
+    <hr class="sb-div">
+    <div class="sb-label">種別</div>
+    <div id="sb-type"></div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <input class="search" id="search" type="text" placeholder="タイトル・メモで絞り込む..." oninput="render()">
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-v" id="s-total">0</div><div class="stat-l">総コンテンツ</div></div>
+      <div class="stat"><div class="stat-v" id="s-week">0</div><div class="stat-l">今週追加</div></div>
+      <div class="stat"><div class="stat-v" id="s-chat">0</div><div class="stat-l">Chat連携</div></div>
+      <div class="stat"><div class="stat-v" id="s-cowork">0</div><div class="stat-l">Cowork連携</div></div>
+    </div>
+    <div class="list-wrap" id="list-wrap">
+      <div class="loading"><div class="spinner"></div><div>「同期」ボタンでDriveからデータを読み込んでください</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg hidden" id="modal-bg">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="modal-ttl">コンテンツを登録</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>タイトル *</label>
+        <input type="text" id="f-title" placeholder="例：向ヶ丘物件マーケティング戦略">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>カテゴリ</label>
+          <select id="f-cat">
+            <option value="">未分類</option>
+            <option value="01">01_顧客・案件管理</option>
+            <option value="02">02_物件管理</option>
+            <option value="03">03_マーケット情報</option>
+            <option value="04">04_社内業務・管理</option>
+            <option value="05">05_スキルアップ</option>
+            <option value="06">06_note記事</option>
+            <option value="07">07_claude活用術</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>種別</label>
+          <select id="f-type">
+            <option value="資料">資料</option>
+            <option value="HTMLツール">HTMLツール</option>
+            <option value="マーケ分析">マーケ分析</option>
+            <option value="note記事">note記事</option>
+            <option value="提案書">提案書</option>
+            <option value="その他">その他</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>💬 Chat URL</label>
+        <input type="url" id="f-chat" placeholder="https://claude.ai/chat/...">
+        <div class="link-hint">ChromeでChatを開いてアドレスバーからコピー</div>
+      </div>
+      <div class="field">
+        <label>🤝 Cowork（プロジェクト名）</label>
+        <input type="text" id="f-cowork" placeholder="例：査定書（土地編）">
+        <div class="link-hint">デスクトップアプリ左サイドバーに表示されるプロジェクト名</div>
+      </div>
+      <div class="field">
+        <label>📁 Google Drive URL</label>
+        <input type="url" id="f-drive" placeholder="https://drive.google.com/...">
+        <div class="link-hint">Driveのファイルを右クリック→「リンクをコピー」</div>
+      </div>
+      <div class="field">
+        <label>メモ</label>
+        <textarea id="f-note" placeholder="概要・ポイント・Coworkのプロジェクト名など"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal()">キャンセル</button>
+      <button class="btn btn-gold" onclick="saveEntry()">登録する</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ===== CONSTANTS =====
+const DRIVE_FILE_NAME = 'claude_content_list_data.json';
+const PARENT_FOLDER_ID = '1BogNLhiT-AcTOpEfXjHg15aGQmlTIdln'; // claude仕事用
+const DRIVE_MCP = 'https://drivemcp.googleapis.com/mcp/v1';
+
+const CATS = [
+  {id:'all', name:'すべて',         emoji:'🗂️', color:'#404868'},
+  {id:'01',  name:'顧客・案件管理',  emoji:'👥', color:'#4f80e0'},
+  {id:'02',  name:'物件管理',        emoji:'🏠', color:'#3da672'},
+  {id:'03',  name:'マーケット情報',  emoji:'📊', color:'#e07b3d'},
+  {id:'04',  name:'社内業務・管理',  emoji:'📋', color:'#8860d0'},
+  {id:'05',  name:'スキルアップ',    emoji:'🎓', color:'#d45858'},
+  {id:'06',  name:'note記事',        emoji:'📝', color:'#c9a84c'},
+  {id:'07',  name:'claude活用術',    emoji:'🤖', color:'#2ec4b6'},
+];
+const TYPES = ['すべて','資料','HTMLツール','マーケ分析','note記事','提案書','その他'];
+const TC = {'資料':'#4f80e0','HTMLツール':'#c9a84c','マーケ分析':'#3da672','note記事':'#c9a84c','提案書':'#8860d0','その他':'#7880a0'};
+
+let entries = [];
+let driveFileId = null;
+let activecat = 'all';
+let activetype = 'すべて';
+let editId = null;
+
+// ===== DRIVE SYNC =====
+async function callClaude(prompt) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4000,
+      system: 'あなたはGoogle DriveのMCPツールを使って操作するアシスタントです。指示に従ってDriveを操作し、結果をそのまま返してください。',
+      messages: [{role: 'user', content: prompt}],
+      mcp_servers: [{type: 'url', url: DRIVE_MCP, name: 'gdrive'}]
+    })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data;
+}
+
+function extractText(data) {
+  return (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+}
+
+function extractToolResult(data) {
+  const results = (data.content || []).filter(b => b.type === 'mcp_tool_result');
+  return results.map(r => r.content?.[0]?.text || '').join('\n');
+}
+
+async function syncDrive() {
+  const btn = document.getElementById('btn-sync');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner" style="width:13px;height:13px;border-width:2px;margin:0;"></div> 同期中...';
+  setSyncStatus('同期中...', '');
+
+  try {
+    // Step1: ファイルを検索
+    const searchData = await callClaude(
+      `Google Driveで「${DRIVE_FILE_NAME}」というファイルを検索してください。フォルダID「${PARENT_FOLDER_ID}」内を探してください。ファイルが見つかった場合はそのファイルIDを教えてください。見つからなかった場合は「NOT_FOUND」と返してください。`
+    );
+    const searchText = extractText(searchData) + extractToolResult(searchData);
+
+    if (searchText.includes('NOT_FOUND') || (!searchText.match(/[0-9A-Za-z_-]{20,}/))) {
+      // ファイルが存在しない → 空データで開始
+      entries = [];
+      driveFileId = null;
+      setSyncStatus('新規データ（まだ保存なし）', '');
+      toast('新規スタートです。登録後「同期」で保存されます', 'ok');
+    } else {
+      // ファイルID抽出
+      const idMatch = searchText.match(/[0-9A-Za-z_-]{25,}/);
+      if (idMatch) {
+        driveFileId = idMatch[0];
+        // Step2: ファイル内容を読み込み
+        const readData = await callClaude(
+          `Google DriveのファイルID「${driveFileId}」のファイルの内容を読み込んで、そのままテキストとして返してください。`
+        );
+        const readText = extractText(readData) + extractToolResult(readData);
+        const jsonMatch = readText.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          entries = JSON.parse(jsonMatch[0]);
+        }
+      }
+      const now = new Date();
+      setSyncStatus(`✅ 同期済み ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`, 'ok');
+      toast(`${entries.length}件のデータを読み込みました`, 'ok');
+    }
+
+    buildSidebar(); render(); updateStats(); updateCounts();
+
+  } catch(err) {
+    console.error(err);
+    setSyncStatus('⚠️ 同期エラー', 'err');
+    toast('同期に失敗しました: ' + err.message, 'ng');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg> 同期';
+  }
+}
+
+async function saveToDrive() {
+  const json = JSON.stringify(entries, null, 2);
+  try {
+    if (driveFileId) {
+      // 既存ファイルを更新
+      await callClaude(
+        `Google DriveのファイルID「${driveFileId}」のファイルを以下のJSON内容で上書き更新してください:\n\n${json}`
+      );
+    } else {
+      // 新規作成
+      const createData = await callClaude(
+        `Google Driveのフォルダ「${PARENT_FOLDER_ID}」に「${DRIVE_FILE_NAME}」という名前でJSONファイルを新規作成してください。内容:\n\n${json}\n\n作成後にファイルIDを教えてください。`
+      );
+      const text = extractText(createData) + extractToolResult(createData);
+      const idMatch = text.match(/[0-9A-Za-z_-]{25,}/);
+      if (idMatch) driveFileId = idMatch[0];
+    }
+    const now = new Date();
+    setSyncStatus(`✅ 保存済み ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`, 'ok');
+  } catch(err) {
+    setSyncStatus('⚠️ 保存エラー', 'err');
+    toast('Driveへの保存に失敗しました', 'ng');
+  }
+}
+
+// ===== SIDEBAR =====
+function buildSidebar() {
+  document.getElementById('sb-cat').innerHTML = CATS.map(c => `
+    <div class="sb-item${activecat===c.id?' active':''}" onclick="selCat('${c.id}')" data-cat="${c.id}">
+      <div class="sb-icon" style="background:${c.color}22;">${c.emoji}</div>
+      <span class="sb-name">${c.name}</span>
+      <span class="sb-cnt" id="cnt-${c.id}">0</span>
+    </div>`).join('');
+
+  document.getElementById('sb-type').innerHTML = TYPES.map(t => `
+    <div class="sb-item${activetype===t?' active':''}" onclick="selType('${esc(t)}')">
+      <div class="sb-icon" style="background:${(TC[t]||'#404868')}22;">${t==='すべて'?'🏷️':'📌'}</div>
+      <span class="sb-name">${t}</span>
+    </div>`).join('');
+}
+
+function selCat(id) { activecat=id; buildSidebar(); render(); updateCounts(); }
+function selType(t) { activetype=t; buildSidebar(); render(); }
+
+function updateCounts() {
+  CATS.forEach(c => {
+    const el = document.getElementById('cnt-'+c.id);
+    if(el) el.textContent = c.id==='all' ? entries.length : entries.filter(e=>e.cat===c.id).length;
+  });
+}
+
+// ===== RENDER =====
+function render() {
+  const q = (document.getElementById('search').value||'').toLowerCase();
+  let list = entries.filter(e => {
+    const mc = activecat==='all' || e.cat===activecat;
+    const mt = activetype==='すべて' || e.type===activetype;
+    const ms = !q || (e.title||'').toLowerCase().includes(q) || (e.note||'').toLowerCase().includes(q);
+    return mc && mt && ms;
+  }).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+
+  const wrap = document.getElementById('list-wrap');
+  if(!list.length) {
+    wrap.innerHTML = `<div class="empty"><div class="empty-ico">📭</div><div class="empty-t">コンテンツがありません</div><div class="empty-s">「＋ 手動登録」から追加してください</div></div>`;
+    return;
+  }
+
+  wrap.innerHTML = list.map(e => {
+    const cat = CATS.find(c=>c.id===e.cat);
+    const tc = TC[e.type]||'#7880a0';
+    const d = e.createdAt ? new Date(e.createdAt).toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit'}) : '—';
+    const hasLink = e.chatUrl||e.coworkName||e.driveUrl;
+    return `
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon" style="background:${cat?cat.color+'22':'#40486822'}">${cat?cat.emoji:'📎'}</div>
+        <div class="card-body">
+          <div class="card-title">${esc(e.title||'無題')}</div>
+          <div class="card-tags">
+            ${cat&&cat.id!=='all'?`<span class="tag tag-cat">${cat.emoji} ${cat.name}</span>`:''}
+            ${e.type?`<span class="tag" style="background:${tc}18;color:${tc};border:1px solid ${tc}30;">${e.type}</span>`:''}
+          </div>
+          ${e.note?`<div class="card-note">${esc(e.note)}</div>`:''}
+          <div class="card-links">
+            ${e.chatUrl?`<a class="lbtn lbtn-chat" href="${esc(e.chatUrl)}" target="_blank" rel="noopener">💬 Chat</a>`:''}
+            ${e.coworkName?`<span class="lbtn lbtn-cowork" title="デスクトップアプリで「${esc(e.coworkName)}」を開いてください">🤝 ${esc(e.coworkName)}</span>`:''}
+            ${e.driveUrl?`<a class="lbtn lbtn-drive" href="${esc(e.driveUrl)}" target="_blank" rel="noopener">📁 Drive</a>`:''}
+            ${!hasLink?'<span style="font-size:11px;color:var(--dim);">リンク未登録</span>':''}
+          </div>
+        </div>
+      </div>
+      <div class="card-foot">
+        <span class="card-date">📅 ${d}</span>
+        <div class="card-actions">
+          <button class="act-btn" onclick="openEditModal('${e.id}')">編集</button>
+          <button class="act-btn del" onclick="deleteEntry('${e.id}')">削除</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateStats() {
+  document.getElementById('s-total').textContent = entries.length;
+  const week = Date.now()-7*24*60*60*1000;
+  document.getElementById('s-week').textContent = entries.filter(e=>new Date(e.createdAt)>week).length;
+  document.getElementById('s-chat').textContent = entries.filter(e=>e.chatUrl).length;
+  document.getElementById('s-cowork').textContent = entries.filter(e=>e.coworkName).length;
+}
+
+// ===== MODAL =====
+function openModal(pre={}) {
+  editId=null;
+  document.getElementById('modal-ttl').textContent='コンテンツを登録';
+  document.getElementById('f-title').value=pre.title||'';
+  document.getElementById('f-cat').value=pre.cat||'';
+  document.getElementById('f-type').value=pre.type||'資料';
+  document.getElementById('f-chat').value=pre.chatUrl||'';
+  document.getElementById('f-cowork').value=pre.coworkName||'';
+  document.getElementById('f-drive').value=pre.driveUrl||'';
+  document.getElementById('f-note').value=pre.note||'';
+  document.getElementById('modal-bg').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('f-title').focus(),80);
+}
+
+function openEditModal(id) {
+  const e=entries.find(x=>x.id===id); if(!e) return;
+  editId=id;
+  document.getElementById('modal-ttl').textContent='コンテンツを編集';
+  document.getElementById('f-title').value=e.title||'';
+  document.getElementById('f-cat').value=e.cat||'';
+  document.getElementById('f-type').value=e.type||'資料';
+  document.getElementById('f-chat').value=e.chatUrl||'';
+  document.getElementById('f-cowork').value=e.coworkName||'';
+  document.getElementById('f-drive').value=e.driveUrl||'';
+  document.getElementById('f-note').value=e.note||'';
+  document.getElementById('modal-bg').classList.remove('hidden');
+}
+
+function closeModal() { document.getElementById('modal-bg').classList.add('hidden'); editId=null; }
+
+async function saveEntry() {
+  const title=document.getElementById('f-title').value.trim();
+  if(!title){ toast('タイトルを入力してください','ng'); return; }
+  const obj={
+    title,
+    cat:document.getElementById('f-cat').value,
+    type:document.getElementById('f-type').value,
+    chatUrl:document.getElementById('f-chat').value.trim(),
+    coworkName:document.getElementById('f-cowork').value.trim(),
+    driveUrl:document.getElementById('f-drive').value.trim(),
+    note:document.getElementById('f-note').value.trim(),
+  };
+  if(editId) {
+    const i=entries.findIndex(x=>x.id===editId);
+    if(i>=0) entries[i]={...entries[i],...obj,updatedAt:new Date().toISOString()};
+    toast('更新しました ✅','ok');
+  } else {
+    entries.unshift({id:'e'+Date.now(),...obj,createdAt:new Date().toISOString()});
+    toast('登録しました ✅','ok');
+  }
+  closeModal();
+  render(); updateStats(); updateCounts(); buildSidebar();
+  setSyncStatus('未保存（同期ボタンで保存）', '');
+  // Drive に自動保存
+  await saveToDrive();
+}
+
+async function deleteEntry(id) {
+  if(!confirm('このコンテンツを削除しますか？')) return;
+  entries=entries.filter(x=>x.id!==id);
+  render(); updateStats(); updateCounts(); buildSidebar();
+  toast('削除しました','ok');
+  await saveToDrive();
+}
+
+// ===== UTILS =====
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function setSyncStatus(msg, cls) {
+  const el = document.getElementById('sync-status');
+  el.textContent = msg;
+  el.className = 'sync-status' + (cls ? ' '+cls : '');
+}
+function toast(msg,type='ok'){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='show '+type;
+  setTimeout(()=>t.className='',3200);
+}
+document.getElementById('modal-bg').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+
+// ===== INIT =====
+buildSidebar();
+</script>
+</body>
+</html>
